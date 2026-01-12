@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 1 — Complete Workflow Priority Matrix</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            padding: 60px 30px;
+            line-height: 1.6;
+            min-width: 900px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 60px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            color: #000;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .instructions {
+            margin-bottom: 40px;
+            padding: 20px 24px;
+            background: #f8f8f8;
+            border-left: 3px solid #2c2c2c;
+            border-radius: 4px;
+        }
+
+        .instructions p {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .matrix-header {
+            display: grid;
+            grid-template-columns: 40px 660px 200px;
+            gap: 0;
+            margin-bottom: 0;
+            padding: 24px 24px;
+            background: #2c2c2c;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .matrix-header div {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #D4AF37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .matrix-header div:nth-child(2) {
+            color: #D4AF37;
+            justify-content: flex-start;
+            padding-left: 40px;
+        }
+
+        .matrix-row {
+            display: grid;
+            grid-template-columns: 40px 660px 200px;
+            gap: 0;
+            padding: 20px 24px;
+            border-left: 1px solid #e5e5e5;
+            border-right: 1px solid #e5e5e5;
+            border-bottom: 1px solid #e5e5e5;
+            background: #ffffff;
+            transition: background 0.2s ease;
+        }
+
+        .matrix-row:hover {
+            background: #fafafa;
+        }
+
+        .matrix-row.parent-row {
+            background: #ffffff;
+        }
+
+        .matrix-row.parent-row:hover {
+            background: #f5f5f5;
+        }
+
+        .matrix-row.child-row {
+            background: #fafafa;
+            padding: 16px 24px;
+        }
+
+        .matrix-row.child-row:hover {
+            background: #f0f0f0;
+        }
+
+        .expand-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .expand-arrow {
+            cursor: pointer;
+            font-size: 18px;
+            color: #D4AF37;
+            background: #000000;
+            border: 2px solid #D4AF37;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            user-select: none;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .expand-arrow:hover {
+            background: #D4AF37;
+            color: #000000;
+        }
+
+        .expand-arrow.expanded {
+            transform: rotate(90deg);
+        }
+
+        .expand-arrow.expanded {
+            transform: rotate(90deg);
+        }
+
+        .workflow-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #000;
+            line-height: 1.4;
+            padding-right: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .workflow-name.child {
+            font-size: 13px;
+            font-weight: 400;
+            color: #333;
+            padding-left: 20px;
+        }
+
+        .workflow-label {
+            font-weight: 600;
+            color: #666;
+            margin-right: 8px;
+            min-width: 20px;
+        }
+
+        .rating-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        select.rating-select {
+            font-size: 14px;
+            padding: 10px 20px;
+            border: 1px solid #d0d0d0;
+            border-radius: 3px;
+            background: #ffffff;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            width: 160px;
+        }
+
+        select.rating-select:hover {
+            border-color: #999;
+            background: #fafafa;
+        }
+
+        select.rating-select:focus {
+            outline: none;
+            border-color: #2c2c2c;
+            box-shadow: 0 0 0 2px rgba(44, 44, 44, 0.1);
+        }
+
+        select.rating-select.high {
+            font-weight: 700;
+            color: #000;
+            border-color: #2c2c2c;
+        }
+
+        select.rating-select.medium {
+            font-weight: 400;
+            color: #1a1a1a;
+            border-color: #999;
+        }
+
+        select.rating-select.low {
+            font-weight: 400;
+            color: #999999;
+            border-color: #d0d0d0;
+        }
+
+        .child-workflows {
+            display: none;
+        }
+
+        .child-workflows.visible {
+            display: contents;
+        }
+
+        .legend {
+            margin-top: 40px;
+            padding: 24px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            border-left: 3px solid #2c2c2c;
+        }
+
+        .legend-title {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .legend-items {
+            display: flex;
+            gap: 40px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .legend-box {
+            width: 40px;
+            height: 20px;
+            border-radius: 2px;
+        }
+
+        .legend-box.high {
+            background: #000;
+        }
+
+        .legend-box.medium {
+            background: #666;
+        }
+
+        .legend-box.low {
+            background: #cccccc;
+        }
+
+        .legend-text {
+            font-size: 13px;
+            color: #1a1a1a;
+        }
+
+        .download-button {
+            margin-top: 20px;
+            padding: 14px 32px;
+            background: #D4AF37;
+            color: #000000;
+            border: 2px solid #000000;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .download-button:hover {
+            background: #000000;
+            color: #D4AF37;
+            border-color: #D4AF37;
+        }
+
+        .download-button {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .download-button button {
+            background: #D4AF37;
+            color: #000000;
+            border: 2px solid #000000;
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .download-button button:hover {
+            background: #000000;
+            color: #D4AF37;
+            border-color: #D4AF37;
+        }
+
+        @media print {
+            body {
+                padding: 30px;
+            }
+            
+            .matrix-row:hover {
+                background: #ffffff;
+            }
+
+            .instructions {
+                display: none;
+            }
+
+            .expand-arrow {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>WORKFLOW PRIORITY MATRIX</h1>
+                    <div class="subtitle">Prepared By Suleiry Matos | Biz Con Ed</div>
+                </div>
+                <div>
+                    <img src="data:image/webp;base64,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" alt="Lusso Venetian Finishes" style="height: 100px; width: auto;">
+                </div>
+            </div>
+        </header>
+
+        <div class="instructions">
+            <p><strong>Instructions:</strong> Use the dropdown menus to set priority ratings for each workflow package and sub-workflow. Click the arrow (▶) to expand and view detailed workflows within each package.</p>
+            <button class="download-button" onclick="downloadPriorityList()">Download Priority List</button>
+        </div>
+
+        <div class="matrix-header">
+            <div></div>
+            <div>Workflow Package</div>
+            <div>Priority</div>
+        </div>
+
+        <!-- 1. Executive & Strategic Management -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-1')">▶</span></div>
+            <div class="workflow-name">1. Executive & Strategic Management Workflows</div>
+            <div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-1">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Decision-making</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Issue escalation</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Priority setting</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Executive reporting & visibility workflow</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Strategic planning cadence</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>KPI & performance review workflow</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">g.</span>Delegation & authority framework</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+        </div>
+
+        <!-- 2. Sales & Estimating -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-2')">▶</span></div>
+            <div class="workflow-name">2. Sales & Estimating Workflows</div>
+            <div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-2">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Lead intake (email / phone)</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Opportunity review</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Estimate creation support</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Estimate approval</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Pricing approval</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>Standardized lead intake workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">g.</span>Opportunity qualification criteria</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">h.</span>Estimate documentation workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">i.</span>Sales-to-operations handoff</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">j.</span>Approved job packet creation</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 3. Client Management -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-3')">▶</span></div>
+            <div class="workflow-name">3. Client Management / Customer Experience Workflows</div>
+            <div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-3">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Client communication during projects</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Change discussions</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Client communication standards</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Change request / variation workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Client update cadence</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>Final handover & sign-off workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 4. Operations & Project Management -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-4')">▶</span></div>
+            <div class="workflow-name">4. Operations & Project Management Workflows</div>
+            <div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-4">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Job assignment</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Informal scheduling</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Issue escalation</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Project setup workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Job lifecycle management</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>Status tracking & reporting</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">g.</span>Issue & risk tracking</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">h.</span>Job closeout workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 5. Scheduling & Resource Planning -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-5')">▶</span></div>
+            <div class="workflow-name">5. Scheduling & Resource Planning Workflows</div>
+            <div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-5">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Short-term labor allocation</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Capacity planning workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Resource forecasting</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Conflict resolution workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Multi-project scheduling</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 6. Field Execution -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-6')">▶</span></div>
+            <div class="workflow-name">6. Field Execution Workflows</div>
+            <div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-6">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>On-site walkthroughs</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Verbal instructions</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Site setup checklist</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Daily execution checklist</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Safety & PPE workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>Daily site reporting</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 7. Quality Control -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-7')">▶</span></div>
+            <div class="workflow-name">7. Quality Control (QA/QC) Workflows</div>
+            <div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-7">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Visual inspections</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Photo sharing</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Verbal approval</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Internal QC checklist</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Defect logging workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>Rework approval process</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">g.</span>Client-facing QC sign-off</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 8. Procurement & Site Materials -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-8')">▶</span></div>
+            <div class="workflow-name">8. Procurement & Site Materials Management Workflows</div>
+            <div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-8">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Reactive purchasing</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Pre-job materials planning</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Site materials ordering workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Vendor selection & approval</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Materials allocation per job</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 9. Warehouse & Inventory -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-9')">▶</span></div>
+            <div class="workflow-name">9. Warehouse & Inventory Workflows</div>
+            <div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-9">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Physical storage</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Inventory intake workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Inventory allocation to jobs</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Check-in / check-out process</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Inventory reconciliation</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>Overstock & leftovers tracking</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 10. Asset & Tool Management -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-10')">▶</span></div>
+            <div class="workflow-name">10. Asset & Tool Management Workflows</div>
+            <div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-10">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Informal tool ownership</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Asset register</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Tool assignment & return</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Loss / damage reporting</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Depreciation tracking support</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+        </div>
+
+        <!-- 11. Office Administration -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-11')">▶</span></div>
+            <div class="workflow-name">11. Office Administration Workflows</div>
+            <div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-11">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Ad-hoc coordination</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Manual follow-ups</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Clerical support across departments</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Office supply monitoring and ordering (informal)</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Compliance-related tracking handled manually</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>Standard intake from sales & operations</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">g.</span>Job documentation management</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">h.</span>Job closeout notification workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">i.</span>Office supply inventory & reorder workflow</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">j.</span>Compliance management workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">k.</span>Central repository for insurance & compliance documents</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 12. Finance — AR -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-12')">▶</span></div>
+            <div class="workflow-name">12. Finance — Accounts Receivable (AR) Workflows</div>
+            <div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-12">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Manual invoicing</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Invoice trigger workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Collections workflow</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Payment tracking</div><div class="rating-cell"><select class="rating-select high" onchange="updateStyle(this)"><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Dispute resolution</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 13. Finance — AP -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-13')">▶</span></div>
+            <div class="workflow-name">13. Finance — Accounts Payable (AP) Workflows</div>
+            <div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-13">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Manual bill processing</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Bill approval workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Vendor payment scheduling</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Spend categorization</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 14. Payroll & Expense Management -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-14')">▶</span></div>
+            <div class="workflow-name">14. Payroll & Expense Management Workflows</div>
+            <div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-14">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Payroll processing</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>Expense reimbursement</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Payroll-job linkage</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Expense policy & submission workflow</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Approval & audit trail</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+        </div>
+
+        <!-- 15. People Operations (HR) -->
+        <div class="matrix-row parent-row">
+            <div class="expand-cell"><span class="expand-arrow" onclick="toggleExpand(this, 'workflow-15')">▶</span></div>
+            <div class="workflow-name">15. People Operations (HR) Workflows</div>
+            <div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div>
+        </div>
+        <div class="child-workflows" id="workflow-15">
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">a.</span>Informal onboarding</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">b.</span>On-the-job training</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">c.</span>Hiring workflow</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">d.</span>Onboarding checklist</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">e.</span>Role definition & accountability</div><div class="rating-cell"><select class="rating-select medium" onchange="updateStyle(this)"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+            <div class="matrix-row child-row"><div class="expand-cell"></div><div class="workflow-name child"><span class="workflow-label">f.</span>Training & skills tracking</div><div class="rating-cell"><select class="rating-select low" onchange="updateStyle(this)"><option value="high">High</option><option value="medium">Medium</option><option value="low" selected>Low</option></select></div></div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-title">Priority Indicators</div>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-box high"></div>
+                    <div class="legend-text"><strong>High</strong> — Critical priority for immediate relief</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box medium"></div>
+                    <div class="legend-text"><strong>Medium</strong> — Important for stability</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box low"></div>
+                    <div class="legend-text"><strong>Low</strong> — Lower immediate impact</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="download-button">
+            <button onclick="downloadPriorityList()">Download Priority List</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        function toggleExpand(arrow, workflowId) {
+            const childWorkflows = document.getElementById(workflowId);
+            childWorkflows.classList.toggle('visible');
+            arrow.classList.toggle('expanded');
+        }
+
+        function updateStyle(selectElement) {
+            // Remove all style classes
+            selectElement.classList.remove('high', 'medium', 'low');
+            
+            // Add the class based on selected value
+            const value = selectElement.value;
+            selectElement.classList.add(value);
+        }
+
+        function downloadPriorityList() {
+            // Create array to hold the data
+            const data = [['Workflow Package', 'Priority']];
+            
+            // Get all parent rows
+            const parentRows = document.querySelectorAll('.matrix-row.parent-row');
+            
+            parentRows.forEach((parentRow, index) => {
+                const parentNumber = index + 1;
+                
+                // Get parent workflow name and priority
+                const parentName = parentRow.querySelector('.workflow-name').textContent.trim();
+                const parentPriority = parentRow.querySelector('.rating-select').value;
+                const parentPriorityCapitalized = parentPriority.charAt(0).toUpperCase() + parentPriority.slice(1);
+                
+                // Add parent to data
+                data.push([parentName, parentPriorityCapitalized]);
+                
+                // Get child workflows for this parent
+                const childWorkflowsDiv = document.getElementById(`workflow-${parentNumber}`);
+                if (childWorkflowsDiv) {
+                    const childRows = childWorkflowsDiv.querySelectorAll('.matrix-row.child-row');
+                    
+                    childRows.forEach(childRow => {
+                        const childLabel = childRow.querySelector('.workflow-label').textContent.trim();
+                        const childNameFull = childRow.querySelector('.workflow-name').textContent.trim();
+                        // Remove the label from the full text to get just the name
+                        const childName = childNameFull.replace(childLabel, '').trim();
+                        const childPriority = childRow.querySelector('.rating-select').value;
+                        const childPriorityCapitalized = childPriority.charAt(0).toUpperCase() + childPriority.slice(1);
+                        
+                        // Add child to data with format like "1a. Decision-making"
+                        data.push([`${parentNumber}${childLabel} ${childName}`, childPriorityCapitalized]);
+                    });
+                }
+            });
+            
+            // Create worksheet
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 60 },  // Workflow Package column
+                { wch: 15 }   // Priority column
+            ];
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Priority List');
+            
+            // Generate Excel file and download
+            XLSX.writeFile(wb, 'Workflow_Priority_List.xlsx');
+        }
+    </script>
+</body>
+</html>
